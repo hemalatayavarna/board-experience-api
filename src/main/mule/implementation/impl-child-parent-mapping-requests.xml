@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="impl-child-parent-sites-mapping-requests:get:subflow" doc:id="99dd18c5-cbe6-4f7d-b9ab-f702b5ed73ec" >
+		<logger level="INFO" doc:name="Log Start Child Parent Sites Mapping Implementation Requests" doc:id="1bcda47c-0dd5-41ad-a58b-f5c52d482bbc" message="Start Child Parent Sites Mapping Implementation Requests" />
+		<ee:transform doc:name="Set Variables: financialPath, apiQueryParams" doc:id="aac9cc2e-084e-455c-aa75-b2d345a84d5a">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="financialPath"><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p('financial.proc.api.child_parent_mapping.path')]]></ee:set-variable>
+				<ee:set-variable variableName="apiQueryParams" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"limit": 0,
+	"page": 1
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="financial-process-api:get-financial-data:subflow" doc:id="0a21552c-cc3c-49cd-b5ab-13bb43f43ba2" name="financial-process-api:get-financial-data:subflow" />
+		<logger level="INFO" doc:name="Log End Child Parent Sites Mapping Implementation Requests" doc:id="b9bf84cc-f81a-42bc-9214-3b275c03ea7a" message="Log End Child Parent Sites Mapping Implementation Requests" />
+	</sub-flow>
+</mule>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<sub-flow name="impl-board-csv:subflow" doc:id="b000ba6a-8816-4c83-82fc-2d3b05a7136d" >
+		<choice doc:name="Choice" doc:id="f42db743-df3c-4af6-a35f-dc1fd8d69c55">
+			<when expression='#[vars.format == "CSV"]'>
+				<ee:transform doc:name="Convert payload to CSV" doc:id="6537a08b-5d5d-4a8f-8824-eb639159eb8d">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/csv separator="|"
+---
+payload.payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<logger level="DEBUG" doc:name="JSON Format requested" doc:id="fc97cef9-9374-4b27-a65e-ce979b0549c0" message="JSON Format requested		" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="impl-board-transactions-requests:get-transactions:subflow" doc:id="2756f68c-00e1-4d90-927e-2676f6798da7" >
+		<logger level="INFO" doc:name="Log Start Transactions Requests" doc:id="a48fe8e2-7030-4095-827d-f4e9e8e1f62c" message="Log Start Transactions Requests"/>
+		<ee:transform doc:name="Set Variables: apiQueryParams, financialPath,format" doc:id="7f81681a-cc18-4c04-84fd-7ec4914cfaec" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="financialPath" ><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p('financial.proc.api.transactions.path')]]></ee:set-variable>
+				<ee:set-variable variableName="apiQueryParams" ><![CDATA[%dw 2.0
+output application/json
+var sourceSystems = {(attributes.queryParams.*"source-system" map (value, index) -> {
+    "source-system": value
+})}
+var objectCodes = {(attributes.queryParams.*"object-code" map (value, index) -> {
+    "object-code": value
+})}
+var sysApiQueryParams = {
+    "reporting-unit": trim(attributes.queryParams."reporting-unit") as String default "",
+    "year": trim(attributes.queryParams.year) as Number default 0,
+    "limit": trim(attributes.queryParams.limit) as Number default 1,
+	"page": trim(attributes.queryParams.page) as Number default 1,
+    "ic-related-parties":trim(attributes.queryParams."ic-related-parties") as String default ""
+}
+---
+sourceSystems ++ objectCodes ++ sysApiQueryParams]]></ee:set-variable>
+				<ee:set-variable variableName="format" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams.format]]></ee:set-variable>
+
+			</ee:variables>
+			
+		</ee:transform>
+		<flow-ref doc:name="financial-process-api:get-financial-trial-balance-data:subflow" doc:id="7794e928-a3ed-4c5d-bee3-7ee0bda6fe32" name="financial-process-api:get-financial-data:subflow" />
+		<ee:transform doc:name="Generate Payload" doc:id="ab33ebce-2645-4748-9591-4ffd23ac4df9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json indent=false
+var newPayload={
+	"_meta": {
+		"pageNumber": vars.apiQueryParams.page as Number default 0,
+		"limit": vars.apiQueryParams.limit as Number default 0 ,
+		"totalRecords": payload.'_meta'.totalRecords as Number default 0,
+		"totalPages": payload.'_meta'.totalPages as Number default 0
+	},
+	"payload": payload.payload map ( item , index ) -> {
+		GLYear: item.year default 0,
+		GLMonth: item.month default "",
+		GLSource: item.glSource default "",
+		JournalID: item.journalId as String default "",
+		"Transaction Description": item.transactionDescription default "",
+		"Account Number": item.accountNumber,
+		"Object Code": item.objectCode default "",
+		"Account Description": item.accountDescription default "",
+		"Amount": item.amount default 0,
+		"Reporting Unit": item.reportingUnit default "",
+		Reference1: item.reference1 default "",
+		Reference2: item.reference2 default "",
+		Reference4: item.reference4 default "",
+		"Company Number": if(item.companyNumber=="" or item.companyNumber==null)("_") else 
+			(item.companyNumber) default ""
+	}	
+}
+
+---
+if (!(payload==[""]))
+	newPayload
+else
+	[]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="impl-board-csv:subflow" doc:id="218d5cc7-2bac-440b-be0c-7e94d7a4c1cd" name="impl-board-csv:subflow" />
+		<logger level="INFO" doc:name="Log End Transactions Requests" doc:id="6d70d772-323d-4c7f-8b01-b646b0efaa36" message="Log End Transactions Requests"/>
+	</sub-flow>
+</mule>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.mulesoft.org/schema/mule/spring" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+    <apikit:config name="board-experience-api-config" api="board-experience-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:listener-config name="board-experience-api-httpListenerConfig">
+        <http:listener-connection host="${http.private.host}" port="${http.private.port}" readTimeout="${http.read.timeout}" connectionIdleTimeout="${http.connection.idle.timeout}" />
+    </http:listener-config>
+    <flow name="board-experience-api-main" doc:id="f74a0fca-9c6b-4570-9a4d-a3e5e3808814">
+        <http:listener config-ref="board-experience-api-httpListenerConfig" path="${api.http.path}${api.http.version}" doc:name="Listener to Board Experience API">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="board-experience-api-config" />
+        <error-handler ref="api-kit-error-handler" />
+    </flow>
+    <flow name="get:\health:board-experience-api-config">
+		<ee:transform xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Set Health Payload">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  name: Mule::p('system.context'),
+  status: "OK",
+  timestamp: (now() as DateTime) >> Mule::p('property.timezone')
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<error-handler ref="business-error-handler" />
+    </flow>
+    <flow name="get:\reports\trial-balance:board-experience-api-config" doc:id="f80374cb-4379-4521-b2cd-bccb5741f7df">
+        <flow-ref doc:name="board-experience-api:security-filter:subflow" doc:id="dc6dc834-d93a-4530-97b6-2c70b33f0ef4" name="board-experience-api:security-filter:subflow" />
+        <flow-ref doc:name="impl-board-trial-balance-requests:get-triabalance:subflow" doc:id="7c69312a-d11d-4b2a-8258-2e2b1c4c60b8" name="impl-board-trial-balance-requests:get-triabalance:subflow" />
+        <error-handler ref="business-error-handler" />
+    </flow>
+    <flow name="get:\reports\trial-balance\transactions:board-experience-api-config" doc:id="9f8c7872-0bd1-48f2-a2e2-94f774ad6369">
+        <flow-ref doc:name="board-experience-api:security-filter:subflow" doc:id="ce24576f-8a0c-462b-9d8b-d1468bc36f60" name="board-experience-api:security-filter:subflow" />
+        <flow-ref doc:name="impl-board-transactions-requests:get-transactions:subflow" doc:id="7a12f6a6-0462-4056-9435-93e4248a8dc9" name="impl-board-transactions-requests:get-transactions:subflow" />
+        <error-handler ref="business-error-handler" />
+    </flow>
+    <sub-flow name="board-experience-api:security-filter:subflow" doc:id="affb9468-5fae-4428-a00f-d9c27b92d53b">
+        <http:basic-security-filter doc:name="Security Filter Realm: mule" doc:id="a3c7a9f6-1f8e-4c9b-99e4-8bc3bd59e914" realm="mule" />
+        <spring:authorization-filter doc:name="Authorization filter: ROLE_CLIENT" doc:id="d5d73b3e-a47b-4480-8e3a-6b6c810ada72" requiredAuthorities="ROLE_CLIENT" />
+        <logger level="INFO" doc:name="Log Query Parameters" doc:id="5f280022-68b2-4634-9bad-a84d7a40f46b" message="queryParams: #[message.attributes.queryParams]" />
+    </sub-flow>
+	<flow name="get:\mappings\trigger-board-child-parent-sites:board-experience-api-config" doc:id="7691c533-0955-4015-84bc-ec1e1b207645" >
+		<logger level="INFO" doc:name="Log Start Get Child Parent Sites Mapping Trigger" doc:id="80f7be88-4b33-40c1-b190-9b2c7243fe16" message="Start Get Child Parent Sites Mapping Trigger"/>
+		<flow-ref doc:name="board-experience-api:security-filter:subflow" doc:id="7059a274-2c5d-4f28-98de-7d68f331b07e" name="board-experience-api:security-filter:subflow"/>
+		<async doc:name="Async" doc:id="50ad4ed7-1756-41e4-96fd-68744e5610ac" >
+			<flow-ref doc:name="impl-child-parent-sites-mapping-requests:get:subflow" doc:id="24f22579-277d-4a14-8ecb-6b5d3997f0e6" name="impl-child-parent-sites-mapping-requests:get:subflow"/>
+		</async>
+		<ee:transform doc:name="Set Payload Response" doc:id="7dd697a0-9f02-49bf-877b-5b718467f064">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+import p from Mule
+output application/json
+---
+{
+	message: p('default.trigger.message'),
+	correlationId: correlationId
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		<logger level="INFO" doc:name="Log End Get Child Parent Sites Mapping Trigger" doc:id="13a5c749-31dc-4110-beef-4ac8fcb22fec" message="End Get Child Parent Sites Mapping Trigger"/>
+		<error-handler ref="business-error-handler" />
+	</flow>
+</mule>

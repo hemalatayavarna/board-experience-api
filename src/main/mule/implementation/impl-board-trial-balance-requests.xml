@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="impl-board-trial-balance-requests:get-triabalance:subflow" doc:id="2756f68c-00e1-4d90-927e-2676f6798da7" >
+		<logger level="INFO" doc:name="Log Start Trial Balance Requests" doc:id="a48fe8e2-7030-4095-827d-f4e9e8e1f62c" message="Log Start Trial Balance Requests"/>
+		<ee:transform doc:name="Set Variables: apiQueryParams, financialPath" doc:id="1425ab82-6d9e-4043-abea-b8d3a757fbc4" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="financialPath" ><![CDATA[%dw 2.0
+output application/java
+---
+Mule::p('financial.proc.api.trial_balance.path')]]></ee:set-variable>
+				<ee:set-variable variableName="apiQueryParams" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"period": trim(attributes.queryParams.period) as Number default 0,
+	"year": trim(attributes.queryParams.year)as Number default 0,
+	"limit": trim(attributes.queryParams.limit)as Number default 1,
+	"page": trim(attributes.queryParams.page) as Number default 1
+}]]></ee:set-variable>
+				<ee:set-variable variableName="format" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams.format]]></ee:set-variable>
+	</ee:variables>
+
+
+		</ee:transform>
+		<flow-ref doc:name="financial-process-api:get-financial-data:subflow" doc:id="7794e928-a3ed-4c5d-bee3-7ee0bda6fe32" name="financial-process-api:get-financial-data:subflow" />
+		<ee:transform doc:name="Generate Response" doc:id="a1ec15d9-4b9c-49e8-86f6-aeb4ecbb6cfb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json indent=false
+import * from dw::core::Strings
+import setCompany from modules::getCompanyNumber
+---
+{
+	"_meta": {
+		"pageNumber": vars.apiQueryParams.page as Number default 0,
+		"limit": vars.apiQueryParams.limit as Number default 0 ,
+		"totalRecords": payload.'_meta'.totalRecords as Number default 0,
+		"totalPages": payload.'_meta'.totalPages as Number default 0
+	},
+	"payload": payload.payload filter not (($.glSource == Mule::p('glSource.name.masterpiece')) and ($.localAccount startsWith Mule::p('constant.digit.9'))) map ( item , index ) -> {
+		"Month": item.month default 0,
+		"Scenario": item.scenario default "",
+		"Consolidation Node": item.consolidationNode default "",
+		"Reporting Unit": item.reportingUnit,
+		"Local Account": item.localAccount as String default "",
+		"IC and Related Parties": item.icRelatedParties default 0,
+		"Investment Cost": item.investmentCost default "",
+		"Company": setCompany(item.glSource,item.company) default "",
+		"GL Source": item.glSource as String default "",
+		"Layer": item.layer default "",
+		"Movement": item.movement default "",
+		"Local Account Category": item.localAccountCategory,
+		"Local Trial Balances": item.localTrialBalances default 0,
+		"Local Account Code": item.localAccountCode default "",
+		"Local Account Description": item.localAccountDescription default ""
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="impl-board-csv:subflow" doc:id="5fdbf61d-fa4c-4037-a8d7-3b80cd34c17e" name="impl-board-csv:subflow"/>
+		<logger level="INFO" doc:name="Log End Trial Balance Requests" doc:id="6d70d772-323d-4c7f-8b01-b646b0efaa36" message="Log End Trial Balance Requests"/>
+	</sub-flow>
+</mule>

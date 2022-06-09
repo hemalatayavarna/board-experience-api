@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="impl-process-trial-balance-requests-test-suite.xml" />
+	<munit:before-test name="board-experience-api-test-suiteBefore_Test" doc:id="cd1c84b6-01a8-4c5b-83a3-66050440d95b" >
+		<munit-tools:mock-when doc:name="Mock Basic Security Filter" doc:id="7f009de8-09ab-4034-8d2e-c6b57ca1b5c1" processor="http:basic-security-filter">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="Security Filter Realm: mule" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		<munit-tools:mock-when doc:name="Mock Authorisation Filter" doc:id="1ed16eaf-27a1-49bb-8f11-fa72c947104d" processor="spring:authorization-filter">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="Authorization filter: ROLE_CLIENT" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		<munit-tools:mock-when doc:name="Mock Async" doc:id="041cc2c8-01f7-42a9-b6b4-752fa1a8387e" processor="async">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="Async" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:mock-when>
+		<munit-tools:mock-when doc:name="Mock Publish to Error MQ" doc:id="05683c2a-cad7-4479-9695-90dee10c6cb4" processor="jms:publish">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute whereValue="Publish To Error MQ" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+	</munit:before-test>
+	<munit:test name="impl-board-trial-balance-requests:get-trial-balance:subflowTest" doc:id="493c0bcf-768f-4daf-b37e-f937d0e4209d" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Select Finanacial Process API" doc:id="375dba78-295e-43b1-88e1-fae544b8b50d" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Financial Process Data" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('examples/get-process-trial-balance-valid-response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			
+
+</munit-tools:mock-when>
+		
+</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Attributes: examples/get-board-trial-balance-api-valid-query-params.json" doc:id="966355d6-75e2-4cf1-a618-6b56fe598c4d" >
+				<munit:attributes value="#[MunitTools::getResourceAsString('examples/get-board-trial-balance-api-valid-query-params.json')]" mediaType="application/json" />
+
+
+			</munit:set-event>
+			<flow-ref doc:name="get:\reports\trial-balance:financial-process-api-config" doc:id="253a7ed5-22db-410e-a695-78add94bf4a4" name="get:\reports\trial-balance:board-experience-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Verify Call to Log End Financial Process API" doc:id="9cecac5e-69da-417a-bf24-6b2e6b5ff325" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="116aef76-bb99-4c0a-b2eb-a4c399273466" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Log Call End to Get TrialBalance Details" doc:id="c5af12d7-3f45-447a-a522-6da64a7dff0e" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="6d70d772-323d-4c7f-8b01-b646b0efaa36" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+
+			</munit-tools:verify-call>	
+			<munit-tools:assert doc:name="Assert payload is Expected" doc:id="013555d5-c1c7-434f-a642-aae1cba56fd7" message="Actual response matches with the Expected response">
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload must equalToResource("examples/get-board-trial-balance-valid-response.json","application/json")]]]></munit-tools:that>
+			</munit-tools:assert>
+								
+		</munit:validation>
+	</munit:test>
+	<munit:test name="impl-board-transactions-requests:get-transactions-all-systems:subflowTest" doc:id="2ba4f808-aaab-4a05-8580-666161b7a93e" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Select Finanacial Process API" doc:id="f7160b2f-2b43-4ba4-be02-3615ed02fe7c" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Financial Process Data" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('examples/get-process-transactions-all-systems-valid-response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Attributes: examples/get-board-all-systems-transactions-api-valid-query-params.json" doc:id="7ae8582c-a2f0-4951-b599-4be507d3a347" >
+				<munit:attributes value="#[MunitTools::getResourceAsString('examples/get-board-all-systems-transactions-api-valid-query-params.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="get:\reports\trial-balance\transactions:board-experience-api-config" doc:id="30d1d9e8-084d-4c2b-9dd1-232d9e265a74" name="get:\reports\trial-balance\transactions:board-experience-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Log End Financial Process API" doc:id="2ff293f0-bef7-468e-a9d0-6560182c0ef1" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Financial Process API" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Log End Transactions Requests" doc:id="b2ff7f14-57a8-4c38-840a-a71217ef7e50" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Transactions Requests" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:assert doc:name="Assert payload is Expected" doc:id="2362e2d6-98e0-4179-8c9b-ac9c80110427" >
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload must equalToResource("examples/get-board-transactions-all-systems-valid-response.json","application/json")]]]></munit-tools:that>
+			</munit-tools:assert>
+			
+		</munit:validation>
+	</munit:test>
+	<munit:test name="impl-board-transactions-requests:get-transactions-ems-mp:subflowTest" doc:id="dd80d97a-b2fc-4223-8c71-79a230bbda4e" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Select Finanacial Process API" doc:id="b6fdbcd5-c0ce-4610-a08f-6a27fae78ce5" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Financial Process Data" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('examples/get-process-transactions-ems-mp-valid-response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Attributes: examples/get-board-ems-mp-transactions-api-valid-query-params.json" doc:id="bcfcd771-79e5-44b7-a034-7913d460d997" >
+				<munit:attributes value="#[MunitTools::getResourceAsString('examples/get-board-ems-mp-transactions-api-valid-query-params.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="get:\reports\trial-balance\transactions:board-experience-api-config" doc:id="3416a18e-e92d-45ac-bedd-86a3a7b5bb59" name="get:\reports\trial-balance\transactions:board-experience-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Log End Financial Process API" doc:id="ff78a8cd-0d73-4d52-85c2-5249e0e7f08c" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Financial Process API" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Log End Transactions Requests" doc:id="ef7fde63-5d45-4343-80fc-04cbcd83f71c" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Transactions Requests" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:assert doc:name="Assert payload is Expected" doc:id="a2ccce18-c45d-4efe-b69a-9ea420de77a6" >
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload must equalToResource("examples/get-board-transactions-ems-mp-valid-response.json","application/json")]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="impl-board-transactions-requests:get-transactions-ceds-mp:subflowTest" doc:id="548ac6d8-db69-4a61-b9d2-4a90801f6210" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Select Finanacial Process API" doc:id="24f98ea4-2a28-4698-be3d-883578f808fb" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Financial Process Data" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('examples/get-process-transactions-ceds-mp-valid-response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Attributes: examples/get-board-ceds-mp-transactions-api-valid-query-params.json" doc:id="3e41fd5b-f02d-410d-8af2-209e9c420252" >
+				<munit:attributes value="#[MunitTools::getResourceAsString('examples/get-board-ceds-mp-transactions-api-valid-query-params.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="get:\reports\trial-balance\transactions:board-experience-api-config" doc:id="9dd622d9-c46d-4449-a194-b5bb36dc5c13" name="get:\reports\trial-balance\transactions:board-experience-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Log End Financial Process API" doc:id="6a8e79cf-e421-4847-b568-72ec615667f6" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Financial Process API" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Log End Transactions Requests" doc:id="6be54b12-d851-49d1-a44a-0a1c537aedd3" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Transactions Requests" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:assert doc:name="Assert payload is Expected" doc:id="6931805e-85f2-4e59-abac-6f21183fae21" >
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+ ---
+payload must equalToResource("examples/get-board-transactions-ceds-mp-valid-response.json","application/json")]]]></munit-tools:that>
+			</munit-tools:assert>
+			
+		</munit:validation>
+	</munit:test>
+	<munit:test name="impl-board-transactions-requests:get-transactions-empty-payload:subflowTest" doc:id="56df7be6-f7de-43bb-8655-c0b50d684eba" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Select Finanacial Process API" doc:id="00321e6e-c086-4f2b-a087-67d719d7258f" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Financial Process Data" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[MunitTools::getResourceAsString('examples/get-process-transactions-empty-payload-valid-response.json')]" mediaType="application/json" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Attributes: examples/get-board-ceds-mp-transactions-api-valid-query-params.json" doc:id="9f7e9be8-043e-48dd-b07d-158066a63dfc" >
+				<munit:attributes value="#[MunitTools::getResourceAsString('examples/get-board-ceds-mp-transactions-api-valid-query-params.json')]" mediaType="application/json" />
+			</munit:set-event>
+			<flow-ref doc:name="get:\reports\trial-balance\transactions:board-experience-api-config" doc:id="05d8c865-b6f8-463b-86a2-f981bb41e08c" name="get:\reports\trial-balance\transactions:board-experience-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Log End Financial Process API" doc:id="51b29f5c-80c4-40a3-b9e3-b3527bbac290" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Financial Process API" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:verify-call doc:name="Log End Transactions Requests" doc:id="3fc4bd33-d1aa-4ed7-a396-816effdb295c" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Transactions Requests" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+			<munit-tools:assert doc:name="Assert payload is Expected" doc:id="c26eb9e1-29e3-44be-852a-8ee2dfa8cf59" >
+				<munit-tools:that ><![CDATA[#[import * from dw::test::Asserts 
+---
+payload must equalToResource("examples/get-board-transactions-empty-payload-valid-response.json","application/json")]]]></munit-tools:that>
+			</munit-tools:assert>
+			
+		</munit:validation>
+	</munit:test>
+	<munit:test name="impl-child-parent-mapping-requests:subflow:test" doc:id="4938d731-7864-4b60-b205-e3d967b11f12" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Call Get Financial Process Data" doc:id="abb77d7c-bf09-4e40-b62c-7d660a116b87" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Get Financial Process Data" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="examples/post-child-parent-site-mapping-example.json" doc:id="9070c50f-0dc7-4fa4-83be-31514150401a" >
+			</munit:set-event>
+			<flow-ref doc:name="get:\mappings\trigger-board-child-parent-sites:board-experience-api-config" doc:id="3967481f-2efa-45c0-8e82-bb0fcfcd9d4d" name="get:\mappings\trigger-board-child-parent-sites:board-experience-api-config" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:verify-call doc:name="Log End Get Child Parent Sites Mapping Trigger" doc:id="201bf64c-706a-418f-a9a5-e96119f2e927" processor="logger">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Log End Get Child Parent Sites Mapping Trigger" attributeName="doc:name" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+
+</mule>

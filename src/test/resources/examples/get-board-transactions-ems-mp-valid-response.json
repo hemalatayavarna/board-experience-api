@@ -1,0 +1,74 @@
+{
+  "_meta": {
+    "pageNumber": 1,
+    "limit": 2,
+    "totalRecords": 4,
+    "totalPages": 1
+  },
+  "payload": [
+    {
+      "GLYear": 2021,
+      "GLMonth": 3,
+      "GLSource": "EMS",
+      "JournalID": "134",
+      "Transaction Description": "Opening Balance Journal",
+      "Account Number": "1302-0000-7281-06",
+      "Object Code": "7281",
+      "Account Description": "STUDENT LEARNING MATERIALS",
+      "Amount": 100.0,
+      "Reporting Unit": "3305332464273000151",
+      "Reference1": "",
+      "Reference2": "",
+      "Reference4": "",
+      "Company Number": "_"
+    },
+    {
+      "GLYear": 2021,
+      "GLMonth": 4,
+      "GLSource": "EMS",
+      "JournalID": "188",
+      "Transaction Description": "Opening Balance Journal",
+      "Account Number": "1409-0000-7281-06",
+      "Object Code": "7281",
+      "Account Description": "STUDENT LEARNING MATERIALS",
+      "Amount": 506.0,
+      "Reporting Unit": "3305332464273000151",
+      "Reference1": "",
+      "Reference2": "",
+      "Reference4": "",
+      "Company Number": "_"
+    },
+    {
+      "GLYear": 2021,
+      "GLMonth": "202111",
+      "GLSource": "Masterpiece",
+      "JournalID": "PV2421",
+      "Transaction Description": "",
+      "Account Number": "001-71111-0107",
+      "Object Code": "71111",
+      "Account Description": "001711110107",
+      "Amount": 5256.0,
+      "Reporting Unit": "0106",
+      "Reference1": "",
+      "Reference2": "270521",
+      "Reference4": "242021",
+      "Company Number": "_"
+    },
+    {
+      "GLYear": 2021,
+      "GLMonth": "202111",
+      "GLSource": "Masterpiece",
+      "JournalID": "PV2421",
+      "Transaction Description": "",
+      "Account Number": "001-71111-0107",
+      "Object Code": "71111",
+      "Account Description": "001711110107",
+      "Amount": 4511.5,
+      "Reporting Unit": "0106",
+      "Reference1": "",
+      "Reference2": "270521",
+      "Reference4": "242021",
+      "Company Number": "_"
+    }
+  ]
+}

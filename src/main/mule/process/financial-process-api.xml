@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<sub-flow name="financial-process-api:get-financial-data:subflow" doc:id="eb68d68d-cda5-4fab-a12f-1c9bbd24b305" >
+		<logger level="INFO" doc:name="Log Start Financial Process API" doc:id="49425d62-bea2-4ade-b95a-8cbaba94c26f" message='#["Start Financial Process API: financialPath = " ++ (vars.financialPath default "")]'/>
+		<http:request method="GET" doc:name="Get Financial Process Data" doc:id="c82e690d-00fd-447c-ae78-db6f7ef90c21" config-ref="financial-process-api-private-httpRequesterConfig" path="#[vars.financialPath]" sendCorrelationId="ALWAYS">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-Source-Id" : Mule::p('source.id')
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[vars.apiQueryParams]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Log End Financial Process API" doc:id="116aef76-bb99-4c0a-b2eb-a4c399273466" message='#["End Financial Process APIs: financialPath = " ++ (vars.financialPath default "")]'/>
+	</sub-flow>
+</mule>

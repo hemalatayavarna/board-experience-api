@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:spring="http://www.mulesoft.org/schema/mule/spring"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<spring:config name="Spring_Config" doc:name="Spring Config" doc:id="5b39f71a-5ee2-4c53-a48b-33b6810ce77d" files="spring/beans.xml" />
+	<spring:security-manager doc:name="Spring Security manager" doc:id="f959623f-9e6f-481b-bcc5-969b84fbffa4" >
+		<spring:delegate-security-provider name="security-provider" delegate-ref="authenticationManager" />
+	</spring:security-manager>
+
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="0930a249-9705-4429-ad7e-2f55b77f5578" file="config/app-config-${env}.properties" key="${secure.key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<jms:config name="JMS_Config_Topic" doc:name="JMS Config" doc:id="1030cc98-0558-4f2e-b8cc-8d253e6be792" >
+		<jms:generic-connection specification="JMS_2_0" username="${mq.broker.username}" password="${mq.broker.password}">
+			<reconnection>
+				<reconnect-forever frequency="${mq.reconnection.frequency}" />
+			</reconnection>
+			<jms:connection-factory >
+				<jms:jndi-connection-factory connectionFactoryJndiName="ConnectionFactory">
+					<jms:name-resolver-builder jndiInitialContextFactory="org.apache.activemq.artemis.jndi.ActiveMQInitialContextFactory" jndiProviderUrl="${mq.broker.url}" />
+				</jms:jndi-connection-factory>
+			</jms:connection-factory>
+		</jms:generic-connection>
+		<jms:consumer-config >
+			<jms:consumer-type >
+				<jms:topic-consumer shared="true" />
+			</jms:consumer-type>
+		</jms:consumer-config>
+		<jms:producer-config persistentDelivery="true" timeToLive="${mq.timetolive}" priority="${mq.priority}"/>
+	</jms:config>
+	<http:request-config
+		name="financial-process-api-private-httpRequesterConfig"
+		doc:name="HTTP Request configuration"
+		doc:id="4d62d21c-3f28-4bdd-8078-668e3243efe1"
+		basePath="${financial.proc.api.basepath}"
+		responseTimeout="${financial.proc.api.response.timeout}">
+		<http:request-connection
+			protocol="${financial.proc.api.protocol}"
+			host="${financial.proc.api.host}" port="${financial.proc.api.port}"
+			maxConnections="${financial.proc.api.maxconnections}"
+			connectionIdleTimeout="${financial.proc.api.timeout}"
+			responseBufferSize="${financial.proc.api.bufferSize}">
+			<reconnection >
+				<reconnect frequency="${financial.proc.reconnection.frequency}" count="${financial.proc.reconnection.attempts}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="e7d9f364-872d-4e44-b951-985b36bb3624" file="config\app-config-${env}.properties" />
+	<configuration-properties doc:name="Configuration properties" doc:id="377ff62d-0c2e-4db2-99ca-444bca403827" file="config/app-config-global.properties" />
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="eb08e4ed-61b4-4248-b15f-19e97db07529" >
+		<vm:queues >
+			<vm:queue queueName="${vm.queue.child_parent_sites}" />
+		</vm:queues>
+	</vm:config>
+</mule>

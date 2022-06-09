@@ -1,0 +1,10 @@
+{
+  "minMuleVersion": "4.3.0",
+  "secureProperties":[
+	  "secure.key",
+	  "secure::basic.auth.username",
+	  "secure::basic.auth.password",
+	  "secure::mq.broker.password",
+	  "secure::mq.broker.username"
+  ]
+}
